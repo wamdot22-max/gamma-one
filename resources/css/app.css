@@ -1,0 +1,32 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Nunito', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+/* Fix Ant Design Vue icon alignment issue caused by Tailwind CSS preflight */
+.ant-btn {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+}
+.ant-btn > .anticon {
+    display: inline-flex;
+    align-items: center;
+}
+.ant-btn > span:not(.anticon) {
+    display: inline-block;
+}
+
+/* Mobile: tabel bisa digeser */
+@media (max-width: 768px) {
+    .ant-table-wrapper {
+        overflow-x: auto;
+    }
+}

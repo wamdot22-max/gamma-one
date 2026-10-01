@@ -1,0 +1,26 @@
+{
+  "name": "Gamma One",
+  "short_name": "Gamma One",
+  "description": "Sistem informasi bimbel Gamma One — One Step, One Growth.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#0B4DA2",
+  "lang": "id",
+  "icons": [
+    {
+      "src": "/images/logo-gamma-one.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
