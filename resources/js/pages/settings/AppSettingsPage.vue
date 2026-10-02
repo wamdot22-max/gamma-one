@@ -81,6 +81,25 @@
         <a-col :xs="24" :lg="12"><a-form-item label="Email"><a-input v-model:value="courseForm.email" /></a-form-item></a-col>
         <a-col :span="24"><a-form-item label="Alamat"><a-textarea v-model:value="courseForm.address" :rows="2" /></a-form-item></a-col>
         <a-col :xs="24" :lg="12"><a-form-item label="Jatuh tempo invoice (hari)"><a-input-number v-model:value="courseForm.invoice_due_days" :min="1" :max="60" style="width: 100%;" /></a-form-item></a-col>
+        <a-col :span="24"><a-form-item label="Generate sesi otomatis"><a-switch v-model:checked="courseForm.auto_generate_enabled" /><div class="hint">Bila mati, sesi hanya dibuat lewat tombol Generate Sesi.</div></a-form-item></a-col>
+        <a-col :xs="24" :lg="8">
+          <a-form-item label="Frekuensi">
+            <a-select v-model:value="courseForm.auto_generate_frequency" :options="[{ label: 'Harian', value: 'harian' }, { label: 'Mingguan', value: 'mingguan' }, { label: 'Bulanan', value: 'bulanan' }]" :disabled="!courseForm.auto_generate_enabled" />
+            <div class="hint">Harian = tiap hari. Mingguan = sehari yang dipilih. Bulanan = tanggal yang dipilih.</div>
+          </a-form-item>
+        </a-col>
+        <a-col :xs="24" :lg="8">
+          <a-form-item label="Waktu generate">
+            <a-time-picker v-model:value="courseForm.auto_generate_time" format="HH:mm" value-format="HH:mm" style="width: 100%;" :disabled="!courseForm.auto_generate_enabled" />
+            <div class="hint">Format 24 jam, contoh 06:00 = jam 6 pagi.</div>
+          </a-form-item>
+        </a-col>
+        <a-col :xs="24" :lg="8" v-if="courseForm.auto_generate_frequency !== 'harian'">
+          <a-form-item :label="courseForm.auto_generate_frequency === 'mingguan' ? 'Hari (1–7)' : 'Tanggal (1–28)'">
+            <a-input-number v-model:value="courseForm.auto_generate_day" :min="1" :max="28" style="width: 100%;" :disabled="!courseForm.auto_generate_enabled" />
+            <div class="hint">{{ courseForm.auto_generate_frequency === 'mingguan' ? '1=Senin … 7=Minggu. Contoh 1 = tiap Senin.' : 'Tanggal tiap bulan. Contoh 1 = tiap tanggal 1.' }}</div>
+          </a-form-item>
+        </a-col>
       </a-row>
       <a-space class="app-settings-page__actions">
         <a-button type="primary" :loading="courseSaving" @click="saveCourse">Simpan Profil Bimbel</a-button>
@@ -138,6 +157,10 @@ const courseForm = reactive({
   semester: '',
   invoice_due_days: 7,
   description: '',
+  auto_generate_enabled: true,
+  auto_generate_time: '06:00',
+  auto_generate_frequency: 'harian',
+  auto_generate_day: 1,
 })
 
 const applyPayloadToForm = (payload) => {
@@ -175,6 +198,10 @@ useQuery({
       semester: payload.semester || '',
       invoice_due_days: payload.invoice_due_days || 7,
       description: payload.description || '',
+      auto_generate_enabled: payload.auto_generate_enabled ?? true,
+      auto_generate_time: payload.auto_generate_time || '06:00',
+      auto_generate_frequency: payload.auto_generate_frequency || 'harian',
+      auto_generate_day: payload.auto_generate_day || 1,
     })
     return payload
   },
@@ -316,5 +343,11 @@ const submit = async () => {
 
 .profile-card {
   margin-top: 16px;
+}
+
+.hint {
+  color: #888;
+  font-size: 12px;
+  margin-top: 2px;
 }
 </style>

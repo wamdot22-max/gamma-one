@@ -9,6 +9,11 @@
           <div class="login-desc">Sistem informasi bimbel: jadwal, kehadiran, nilai, dan tagihan dalam satu genggaman.</div>
         </a-col>
         <a-col :xs="24" :sm="14" class="login-form-col">
+          <div class="login-mobile-brand">
+            <img v-if="appSettings?.login_logo_url" :src="appSettings.login_logo_url" alt="Gamma One" class="login-mobile-logo" />
+            <div class="login-mobile-name">{{ appSettings?.app_name || 'Gamma One' }}</div>
+            <div class="login-mobile-tagline">One Step, One Growth.</div>
+          </div>
           <a-typography-title :level="3" class="login-title">{{ appSettings?.app_name || 'Gamma One' }}</a-typography-title>
           <div class="login-subtitle">Masuk untuk melanjutkan</div>
           <a-form layout="vertical" :model="formState" @finish="submit" autocomplete="on" name="login_form">
@@ -79,6 +84,7 @@ const submit = async () => {
 <style scoped>
 .login-wrap {
   min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   place-items: center;
   background: linear-gradient(135deg, #0b4da2 0%, #1877c9 60%, #e8f1fb 100%);
@@ -132,5 +138,52 @@ const submit = async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.login-mobile-brand {
+  display: none;
+  text-align: center;
+  margin-bottom: 16px;
+}
+.login-mobile-logo {
+  max-width: 72px;
+  max-height: 72px;
+  object-fit: contain;
+}
+.login-mobile-name {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0b4da2;
+}
+.login-mobile-tagline {
+  font-size: 13px;
+  font-weight: 700;
+  color: #b45309;
+}
+
+@media (max-width: 575px) {
+  .login-wrap {
+    padding: 12px;
+    place-items: start center;
+  }
+  .login-form-col {
+    padding: 20px !important;
+  }
+  .login-mobile-brand {
+    display: block;
+  }
+  .login-title {
+    font-size: 20px !important;
+  }
+  .login-form-col :deep(.ant-input),
+  .login-form-col :deep(.ant-input-password input) {
+    font-size: 16px;
+    min-height: 44px;
+  }
+  .login-form-col :deep(.ant-btn) {
+    min-height: 44px;
+    font-size: 16px;
+  }
 }
 </style>
