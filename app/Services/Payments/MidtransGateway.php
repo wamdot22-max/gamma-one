@@ -21,7 +21,8 @@ class MidtransGateway implements PaymentGateway
     public function createCharge(Invoice $invoice): array
     {
         $invoice->loadMissing('student:id,name,phone');
-        $orderId = $invoice->invoice_no.'-'.now()->format('His').'-'.$invoice->id;
+        $safeNo = str_replace(['/', '\\'], '-', $invoice->invoice_no);
+        $orderId = $safeNo.'-'.now()->format('His').'-'.$invoice->id;
         $gross = max(0, $invoice->total - $invoice->paid_amount);
 
         $params = [
