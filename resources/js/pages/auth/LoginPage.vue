@@ -89,10 +89,11 @@ const submit = async () => {
   place-items: center;
   background: linear-gradient(135deg, #0b4da2 0%, #1877c9 60%, #e8f1fb 100%);
   padding: 16px;
+  overflow-x: clip;
 }
 .login-card {
-  width: 720px;
-  max-width: 100%;
+  width: min(720px, 100%);
+  max-width: calc(100vw - 24px);
   border-radius: 16px;
   overflow: hidden;
 }
@@ -126,6 +127,11 @@ const submit = async () => {
 }
 .login-form-col {
   padding: 32px !important;
+  min-width: 0;
+}
+.login-form-col :deep(.ant-input),
+.login-form-col :deep(.ant-input-password) {
+  max-width: 100%;
 }
 .login-title {
   margin-bottom: 0 !important;
