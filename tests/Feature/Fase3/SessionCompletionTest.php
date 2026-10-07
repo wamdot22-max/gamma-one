@@ -64,6 +64,7 @@ class SessionCompletionTest extends TestCase
 
         $this->actingAs($this->tutorUser, 'sanctum')->putJson("/api/v1/sessions/{$this->session->id}/attendances", [
             'items' => [['student_id' => $this->student->id, 'status' => 'hadir']],
+            'material_notes' => 'Aljabar.',
         ])->assertOk();
 
         $this->actingAs($this->tutorUser, 'sanctum')
@@ -108,5 +109,43 @@ class SessionCompletionTest extends TestCase
         $this->assertSame(1, $done);
         $this->assertSame('selesai', $this->session->fresh()->status);
         $this->assertSame('terjadwal', $other->fresh()->status);
+    }
+
+    public function test_simpan_tanpa_tanda_ditolak(): void
+    {
+        $this->actingAs($this->tutorUser, 'sanctum')->putJson("/api/v1/sessions/{$this->session->id}/attendances", [
+            'items' => [['student_id' => $this->student->id]],
+        ])->assertStatus(422);
+    }
+
+    public function test_selesai_butuh_catatan_materi(): void
+    {
+        $this->actingAs($this->tutorUser, 'sanctum')->putJson("/api/v1/sessions/{$this->session->id}/attendances", [
+            'items' => [['student_id' => $this->student->id, 'status' => 'hadir']],
+        ])->assertOk();
+
+        $this->actingAs($this->tutorUser, 'sanctum')
+            ->putJson("/api/v1/sessions/{$this->session->id}/complete", [])
+            ->assertStatus(422);
+
+        $this->actingAs($this->tutorUser, 'sanctum')->putJson("/api/v1/sessions/{$this->session->id}/attendances", [
+            'items' => [['student_id' => $this->student->id, 'status' => 'hadir']],
+            'material_notes' => 'Aljabar dasar.',
+        ])->assertOk();
+
+        $this->actingAs($this->tutorUser, 'sanctum')
+            ->putJson("/api/v1/sessions/{$this->session->id}/complete", [])
+            ->assertOk();
+    }
+
+    public function test_tutor_otomatis_tercatat_hadir(): void
+    {
+        $this->assertNull($this->session->fresh()->tutor_status);
+
+        $this->actingAs($this->tutorUser, 'sanctum')->putJson("/api/v1/sessions/{$this->session->id}/attendances", [
+            'items' => [['student_id' => $this->student->id, 'status' => 'hadir']],
+        ])->assertOk();
+
+        $this->assertSame('hadir', $this->session->fresh()->tutor_status);
     }
 }

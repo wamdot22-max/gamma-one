@@ -28,6 +28,7 @@ import SessionsPage from '../pages/scheduling/SessionsPage.vue'
 import InvoicesPage from '../pages/finance/InvoicesPage.vue'
 import PaymentsPage from '../pages/finance/PaymentsPage.vue'
 import PayrollsPage from '../pages/finance/PayrollsPage.vue'
+import TutorRecapsPage from '../pages/finance/TutorRecapsPage.vue'
 import NotificationsPage from '../pages/notifications/NotificationsPage.vue'
 import AssessmentsPage from '../pages/academic/AssessmentsPage.vue'
 import MaterialsPage from '../pages/academic/MaterialsPage.vue'
@@ -157,6 +158,7 @@ const routes = [
       { path: 'invoices', component: InvoicesPage, meta: { permission: 'invoices.view' } },
       { path: 'payments', component: PaymentsPage, meta: { permission: 'payments.view' } },
       { path: 'payrolls', component: PayrollsPage, meta: { permission: 'payrolls.view' } },
+      { path: 'tutor-recaps', component: TutorRecapsPage, meta: { permission: 'payrolls.view' } },
       {
         path: 'notification-templates',
         component: CrudPage,

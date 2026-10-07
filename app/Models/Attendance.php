@@ -15,7 +15,12 @@ class Attendance extends Model
 
     public const STATUSES = ['hadir', 'izin', 'sakit', 'alfa'];
 
-    protected $fillable = ['session_id', 'student_id', 'status', 'note', 'marked_by'];
+    protected $fillable = ['session_id', 'student_id', 'status', 'understanding', 'note', 'marked_by'];
+
+    protected function casts(): array
+    {
+        return ['understanding' => 'integer'];
+    }
 
     public function session()
     {

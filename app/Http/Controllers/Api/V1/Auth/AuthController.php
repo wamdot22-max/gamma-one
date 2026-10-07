@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Models\User;
+use App\Support\Ownership;
 use App\Support\PhoneNumber;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
@@ -47,7 +48,7 @@ class AuthController extends Controller
 
     private function payload(User $user, ?string $token = null, ?Carbon $expiresAt = null): array
     {
-        return ['token' => $token, 'token_expires_at' => $expiresAt?->toISOString(), 'user' => $user, 'roles' => $user->getRoleNames(), 'permissions' => $user->getAllPermissions()->pluck('name')];
+        return ['token' => $token, 'token_expires_at' => $expiresAt?->toISOString(), 'user' => $user, 'roles' => $user->getRoleNames(), 'permissions' => $user->getAllPermissions()->pluck('name'), 'tutor_id' => Ownership::tutorRecord($user)?->id];
     }
 
     private function tokenExpiration(bool $remember): ?Carbon

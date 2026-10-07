@@ -110,6 +110,7 @@
         <a-card size="small" class="att-info">
           <div class="att-head">{{ att.session?.school_class?.name }}</div>
           <div class="muted">{{ dateFull(att.session?.session_date) }} · {{ short(att.session?.start_time) }}–{{ short(att.session?.end_time) }} · {{ att.session?.room?.name || 'tanpa ruangan' }}</div>
+          <div class="att-tutor">Tutor: {{ att.session?.substitute?.name || att.session?.tutor?.name || '-' }}<a-tag v-if="att.session?.substitute" color="purple">pengganti</a-tag></div>
           <div class="att-count">{{ filledCount }} dari {{ att.total }} terisi</div>
           <a-progress :percent="att.total ? Math.round((filledCount / att.total) * 100) : 0" />
         </a-card>
@@ -117,11 +118,18 @@
           <a-tab-pane key="manual" tab="Manual">
             <a-input v-model:value="studentSearch" placeholder="Cari nama siswa..." allow-clear class="att-search" />
             <a-button block class="att-all" @click="markAllPresent">Tandai semua hadir</a-button>
-            <div v-for="item in filteredAttItems" :key="item.student.id" class="att-row">
-              <div class="att-name">{{ item.student.name }}<div class="att-nis">{{ item.student.nis }}</div></div>
-              <a-radio-group v-model:value="item.status" button-style="solid" size="large">
-                <a-radio-button v-for="s in statuses" :key="s.value" :value="s.value" :class="'st-' + s.value">{{ s.label }}</a-radio-button>
-              </a-radio-group>
+            <div v-for="item in filteredAttItems" :key="item.student.id" class="att-card">
+              <div class="att-row">
+                <div class="att-name">{{ item.student.name }}<div class="att-nis">{{ item.student.nis }}</div></div>
+                <a-radio-group v-model:value="item.status" button-style="solid" size="large">
+                  <a-radio-button v-for="s in statuses" :key="s.value" :value="s.value" :class="'st-' + s.value">{{ s.label }}</a-radio-button>
+                </a-radio-group>
+              </div>
+              <div class="att-sub">
+                <a-rate v-model:value="item.understanding" :count="5" class="att-stars" />
+                <a-button size="small" type="link" @click="item.showNote = !item.showNote">{{ item.note ? 'Ubah catatan' : 'Catatan' }}</a-button>
+              </div>
+              <a-textarea v-if="item.showNote" v-model:value="item.note" :rows="1" placeholder="Catatan untuk ortu..." class="att-note" />
             </div>
           </a-tab-pane>
           <a-tab-pane key="scan" tab="Pindai QR">
@@ -135,14 +143,12 @@
             <a-button v-if="qrSupported" block class="scan-btn" @click="toggleScan">{{ scanning ? 'Hentikan Kamera' : 'Nyalakan Kamera' }}</a-button>
           </a-tab-pane>
         </a-tabs>
-        <a-collapse ghost class="att-notes">
-          <a-collapse-panel key="notes" header="Catatan sesi (materi & kehadiran tutor)">
-            <a-form layout="vertical">
-              <a-form-item label="Catatan materi sesi"><a-textarea v-model:value="materialNotes" :rows="2" /></a-form-item>
-              <a-form-item label="Kehadiran tutor"><a-select v-model:value="tutorStatus" allow-clear :options="statuses.map((s) => ({ label: s.label, value: s.value }))" /></a-form-item>
-            </a-form>
-          </a-collapse-panel>
-        </a-collapse>
+        <a-divider class="att-divider">Catatan sesi</a-divider>
+        <a-form layout="vertical">
+          <a-form-item label="Catatan materi sesi" required><a-textarea v-model:value="materialNotes" :rows="2" placeholder="Wajib diisi sebelum menyelesaikan sesi" /></a-form-item>
+          <a-form-item v-if="showTutorStatus" label="Kehadiran tutor"><a-select v-model:value="tutorStatus" allow-clear :options="statuses.map((s) => ({ label: s.label, value: s.value }))" /></a-form-item>
+          <div v-else class="muted">Kehadiran Anda tercatat otomatis sebagai hadir.</div>
+        </a-form>
       </div>
       <template #footer>
         <div class="att-foot">
@@ -213,6 +219,11 @@ const filteredAttItems = computed(() => {
   return attItems.value.filter((i) => i.student.name.toLowerCase().includes(query) || String(i.student.nis || '').toLowerCase().includes(query))
 })
 const filledCount = computed(() => attItems.value.filter((i) => i.status).length)
+const showTutorStatus = computed(() => {
+  const mine = authStore.tutorId
+  if (!mine) return true
+  return mine !== att.value?.session?.tutor_id && mine !== att.value?.session?.substitute?.id
+})
 function markAllPresent() { attItems.value.forEach((i) => { i.status = 'hadir' }) }
 const scanCode = ref(''), scanning = ref(false), videoEl = ref(null)
 const qrSupported = typeof window !== 'undefined' && 'BarcodeDetector' in window
@@ -292,7 +303,7 @@ async function openAttendance(record) {
   try {
     const { data } = await api.get(`/sessions/${record.id}/attendances`)
     att.value = data.data
-    attItems.value = (data.data.items || []).map((i) => ({ student: i.student, status: i.status || 'hadir', note: i.note || '' }))
+    attItems.value = (data.data.items || []).map((i) => ({ student: i.student, status: i.status || null, understanding: i.understanding || 0, note: i.note || '', showNote: !!i.note }))
     studentSearch.value = ''
     materialNotes.value = ''
     tutorStatus.value = null
@@ -301,9 +312,14 @@ async function openAttendance(record) {
   } catch (e) { message.error(getApiErrorMessage(e, 'Gagal memuat absensi')) }
 }
 async function saveAttendance() {
+  const empty = attItems.value.filter((i) => !i.status).length
+  if (empty > 0) {
+    message.warning(`${empty} siswa belum bertanda. Tandai semua dulu.`)
+    return
+  }
   attSaving.value = true
   try {
-    await api.put(`/sessions/${att.value.session.id}/attendances`, { items: attItems.value.map((i) => ({ student_id: i.student.id, status: i.status, note: i.note })), material_notes: materialNotes.value || undefined, tutor_status: tutorStatus.value || undefined })
+    await api.put(`/sessions/${att.value.session.id}/attendances`, { items: attItems.value.map((i) => ({ student_id: i.student.id, status: i.status, understanding: i.understanding || null, note: i.note })), material_notes: materialNotes.value || undefined, tutor_status: tutorStatus.value || undefined })
     const done = attItems.value.filter((i) => i.status).length
     att.value.filled = done
     refetch(); message.success('Absensi tersimpan')
@@ -325,7 +341,7 @@ async function openAttendance_keepTab() {
   const { data } = await api.get(`/sessions/${att.value.session.id}/attendances`)
   att.value = data.data
   const prev = Object.fromEntries(attItems.value.map((i) => [i.student.id, i.status]))
-  attItems.value = (data.data.items || []).map((i) => ({ student: i.student, status: prev[i.student.id] || i.status || 'hadir', note: i.note || '' }))
+  attItems.value = (data.data.items || []).map((i) => ({ student: i.student, status: prev[i.student.id] || i.status || null, understanding: i.understanding || 0, note: i.note || '', showNote: !!i.note }))
 }
 let scanStream = null, scanRaf = 0
 async function toggleScan() {
@@ -374,10 +390,15 @@ async function exportRecap() {
 .att-info { border-radius: 12px; margin-bottom: 12px; background: #f6f9ff; }
 .att-head { font-weight: 800; font-size: 15px; }
 .att-count { color: #0b4da2; font-weight: 700; margin: 4px 0 8px; }
+.att-tutor { font-size: 13px; margin-top: 4px; display: flex; align-items: center; gap: 6px; }
 .att-search { margin-bottom: 8px; }
 .att-all { margin-bottom: 8px; }
-.att-notes { margin-top: 8px; }
-.att-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+.att-divider { margin: 12px 0; }
+.att-card { padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+.att-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.att-sub { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
+.att-stars { font-size: 16px; }
+.att-note { margin-top: 4px; }
 .att-name { font-weight: 600; }
 .att-nis { font-size: 12px; color: #888; font-weight: 400; }
 .st-hadir :deep(.ant-radio-button-checked) { background: #16a34a; border-color: #16a34a; }

@@ -150,6 +150,7 @@ class DatabaseSeeder extends Seeder
         Menu::updateOrCreate(['path' => '/invoices'], ['name' => 'Invoices', 'icon' => 'FileTextOutlined', 'sort_order' => 1, 'parent_id' => $financeMenu->id, 'permission_name' => 'invoices.view']);
         Menu::updateOrCreate(['path' => '/payments'], ['name' => 'Pembayaran', 'icon' => 'DollarOutlined', 'sort_order' => 2, 'parent_id' => $financeMenu->id, 'permission_name' => 'payments.view']);
         Menu::updateOrCreate(['path' => '/payrolls'], ['name' => 'Gaji Tutor', 'icon' => 'BankOutlined', 'sort_order' => 3, 'parent_id' => $financeMenu->id, 'permission_name' => 'payrolls.view']);
+        Menu::updateOrCreate(['path' => '/tutor-recaps'], ['name' => 'Rekap Tutor', 'icon' => 'BarChartOutlined', 'sort_order' => 4, 'parent_id' => $financeMenu->id, 'permission_name' => 'payrolls.view']);
 
         $notifMenu = Menu::firstOrCreate(['name' => 'Notifikasi'], ['path' => null, 'icon' => 'BellOutlined', 'sort_order' => 13, 'permission_name' => null]);
         Menu::updateOrCreate(['path' => '/notification-templates'], ['name' => 'Template Pesan', 'icon' => 'MessageOutlined', 'sort_order' => 1, 'parent_id' => $notifMenu->id, 'permission_name' => 'notification-templates.view']);

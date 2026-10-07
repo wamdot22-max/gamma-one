@@ -207,7 +207,7 @@ class SessionController extends Controller
         ]);
 
         return $this->ok([
-            'session' => $session->load(['schoolClass:id,name', 'tutor:id,name']),
+            'session' => $session->load(['schoolClass:id,name', 'tutor:id,name', 'substitute:id,name']),
             'filled' => $marked->count(),
             'total' => $students->count(),
             'items' => $items,
@@ -237,7 +237,7 @@ class SessionController extends Controller
         foreach ($data['items'] as $item) {
             Attendance::updateOrCreate(
                 ['session_id' => $session->id, 'student_id' => $item['student_id']],
-                ['status' => $item['status'], 'note' => $item['note'] ?? null, 'marked_by' => $request->user()->id]
+                ['status' => $item['status'], 'understanding' => $item['understanding'] ?? null, 'note' => $item['note'] ?? null, 'marked_by' => $request->user()->id]
             );
         }
 
@@ -252,9 +252,15 @@ class SessionController extends Controller
             }
         }
 
+        // Pengisi yang merupakan tutor sesi otomatis tercatat hadir;
+        // staf/admin yang mengisikan tetap mengisi manual.
+        $saverTutorId = Ownership::tutorRecord($request->user())?->id;
+        $isOwnTutor = $saverTutorId && in_array($saverTutorId, [$session->tutor_id, $session->substitute_tutor_id]);
+        $tutorStatus = $data['tutor_status'] ?? ($isOwnTutor ? 'hadir' : $session->tutor_status);
+
         $session->update([
             'material_notes' => $data['material_notes'] ?? $session->material_notes,
-            'tutor_status' => $data['tutor_status'] ?? $session->tutor_status,
+            'tutor_status' => $tutorStatus,
         ]);
 
         return $this->ok(['saved' => count($data['items'])], 'Absensi tersimpan');
@@ -275,6 +281,9 @@ class SessionController extends Controller
         $filled = $session->attendances()->count();
         if ($filled < $enrolled) {
             return $this->fail("Absensi belum lengkap ({$filled} dari {$enrolled} terisi).", 422);
+        }
+        if (! trim((string) $session->material_notes)) {
+            return $this->fail('Catatan materi wajib diisi sebelum menyelesaikan sesi.', 422);
         }
 
         $session->update(['status' => 'selesai']);

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\Academic\AssessmentController;
 use App\Http\Controllers\Api\V1\Academic\AssignmentController;
 use App\Http\Controllers\Api\V1\Academic\GradeController;
+use App\Http\Controllers\Api\V1\Academic\JournalController;
 use App\Http\Controllers\Api\V1\Academic\MaterialController;
 use App\Http\Controllers\Api\V1\Academic\ReportCardController;
 use App\Http\Controllers\Api\V1\Academic\SubmissionController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\Api\V1\Finance\InvoiceController;
 use App\Http\Controllers\Api\V1\Finance\PaymentController;
 use App\Http\Controllers\Api\V1\Finance\PayrollController;
 use App\Http\Controllers\Api\V1\Finance\ReportController;
+use App\Http\Controllers\Api\V1\Finance\TutorRecapController;
 use App\Http\Controllers\Api\V1\Finance\WebhookController;
 use App\Http\Controllers\Api\V1\IAM\PermissionController;
 use App\Http\Controllers\Api\V1\IAM\PermissionGroupController;
@@ -110,6 +112,8 @@ Route::prefix('v1')->group(function (): void {
         Route::delete('/payments/{payment}', [PaymentController::class, 'destroy'])->middleware('permission:payments.delete');
         Route::get('/payrolls', [PayrollController::class, 'index'])->middleware('permission:payrolls.view');
         Route::get('/payrolls/{tutor}/slip', [PayrollController::class, 'slip'])->middleware('permission:payrolls.view');
+        Route::get('/tutor-recaps', [TutorRecapController::class, 'index'])->middleware('permission:payrolls.view');
+        Route::get('/tutor-recaps/export', [TutorRecapController::class, 'export'])->middleware('permission:payrolls.view');
         Route::get('/reports/income', [ReportController::class, 'income'])->middleware('permission:payments.view');
         Route::get('/reports/income-export', [ReportController::class, 'incomeExport'])->middleware('permission:payments.view');
         Route::get('/reports/income-pdf', [ReportController::class, 'incomePdf'])->middleware('permission:payments.view');
@@ -118,6 +122,7 @@ Route::prefix('v1')->group(function (): void {
         Route::put('/assessments/{assessment}/grades', [AssessmentController::class, 'storeGrades'])->middleware('permission:grades.update');
         Route::get('/grades', [GradeController::class, 'index'])->middleware('permission:grades.view');
         Route::get('/grades/averages', [GradeController::class, 'averages'])->middleware('permission:grades.view');
+        Route::get('/journals', [JournalController::class, 'index'])->middleware('permission:sessions.view');
         secureCrud('materials', MaterialController::class, 'materials');
         secureCrud('assignments', AssignmentController::class, 'assignments');
         Route::get('/submissions', [SubmissionController::class, 'index'])->middleware('permission:submissions.view');

@@ -9,18 +9,21 @@ export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)
   const permissions = ref([])
   const roles = ref([])
+  const tutorId = ref(null)
   const loading = ref(true)
 
   const setAuthData = (payload = {}) => {
     user.value = payload.user || null
     permissions.value = payload.permissions || []
     roles.value = payload.roles || []
+    tutorId.value = payload.tutor_id || null
   }
 
   const clearState = () => {
     user.value = null
     permissions.value = []
     roles.value = []
+    tutorId.value = null
   }
 
   const login = async (identity, password, remember = false) => {
@@ -55,5 +58,5 @@ export const useAuthStore = defineStore('auth', () => {
   const isPortalUser = computed(() => roles.value.some((role) => PORTAL_ROLES.includes(role)))
   const homePath = computed(() => (isPortalUser.value ? '/portal' : '/dashboard'))
 
-  return { user, permissions, roles, loading, login, logout, refreshMe, forgotPassword, resetPassword, can, hasRole, isPortalUser, homePath }
+  return { user, permissions, roles, tutorId, loading, login, logout, refreshMe, forgotPassword, resetPassword, can, hasRole, isPortalUser, homePath }
 })

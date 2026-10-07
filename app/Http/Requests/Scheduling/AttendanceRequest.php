@@ -19,6 +19,7 @@ class AttendanceRequest extends FormRequest
             'items' => ['required', 'array', 'min:1'],
             'items.*.student_id' => ['required', 'exists:students,id'],
             'items.*.status' => ['required', Rule::in(Attendance::STATUSES)],
+            'items.*.understanding' => ['nullable', 'integer', 'min:1', 'max:5'],
             'items.*.note' => ['nullable', 'string', 'max:500'],
             'material_notes' => ['nullable', 'string'],
             'tutor_status' => ['nullable', Rule::in(Attendance::STATUSES)],
@@ -30,6 +31,7 @@ class AttendanceRequest extends FormRequest
         return [
             'items.required' => 'Daftar kehadiran wajib diisi.',
             'items.*.status.in' => 'Status hanya hadir, izin, sakit, atau alfa.',
+            'items.*.understanding.min' => 'Pemahaman 1 sampai 5 bintang.',
         ];
     }
 }

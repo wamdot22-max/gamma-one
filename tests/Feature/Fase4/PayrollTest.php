@@ -2,9 +2,12 @@
 
 namespace Tests\Feature\Fase4;
 
+use App\Models\Attendance;
+use App\Models\Enrollment;
 use App\Models\Program;
 use App\Models\SchoolClass;
 use App\Models\Session;
+use App\Models\Student;
 use App\Models\Tutor;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
@@ -54,5 +57,26 @@ class PayrollTest extends TestCase
 
         $this->actingAs($userA, 'sanctum')->getJson("/api/v1/payrolls/{$tutorB->id}/slip?month=2026-10")
             ->assertNotFound();
+    }
+
+    public function test_rekap_tutor_memuat_kinerja(): void
+    {
+        $admin = User::where('email', 'admin.contoh@dev.local')->firstOrFail();
+        $tutor = Tutor::factory()->create(['fee_per_session' => 100000]);
+        $program = Program::firstOrFail();
+        $class = SchoolClass::factory()->create(['program_id' => $program->id, 'tutor_id' => $tutor->id]);
+        $student = Student::factory()->create();
+        Enrollment::factory()->create(['student_id' => $student->id, 'school_class_id' => $class->id, 'status' => 'aktif']);
+        $session = Session::factory()->create(['school_class_id' => $class->id, 'tutor_id' => $tutor->id, 'session_date' => '2026-10-05', 'status' => 'selesai']);
+        Attendance::factory()->create(['session_id' => $session->id, 'student_id' => $student->id, 'status' => 'hadir']);
+
+        $response = $this->actingAs($admin, 'sanctum')->getJson('/api/v1/tutor-recaps?month=2026-10');
+        $response->assertOk();
+
+        $row = collect($response->json('data.rows'))->firstWhere('tutor.id', $tutor->id);
+        $this->assertSame(1, $row['dijadwalkan']);
+        $this->assertSame(1, $row['selesai']);
+        $this->assertSame(100.0, (float) $row['absensi_persen']);
+        $this->assertSame(100000, $row['honor']);
     }
 }
