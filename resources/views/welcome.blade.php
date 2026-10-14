@@ -8,6 +8,7 @@
         <link rel="icon" type="image/svg+xml" href="/images/logo-gamma-one.svg" />
         <link rel="manifest" href="/manifest.webmanifest" />
         <meta name="theme-color" content="#0B4DA2" />
+        <meta name="app-build" content="{{ @filemtime(public_path('build/manifest.json')) ?: 'dev' }}" />
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>

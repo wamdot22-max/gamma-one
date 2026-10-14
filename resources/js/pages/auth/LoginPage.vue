@@ -31,6 +31,7 @@
             </a-form-item>
             <a-button html-type="submit" type="primary" block :loading="loading">Masuk</a-button>
           </a-form>
+          <div class="login-build">build {{ buildId }}</div>
         </a-col>
       </a-row>
     </a-card>
@@ -50,6 +51,7 @@ import { message } from 'ant-design-vue'
 const authStore = useAuthStore()
 const router = useRouter()
 const loading = ref(false)
+const buildId = document.querySelector('meta[name="app-build"]')?.content || 'dev'
 
 const { data: appSettings } = useQuery({
   queryKey: ['app-settings-login'],
@@ -146,6 +148,12 @@ const submit = async () => {
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
+}
+.login-build {
+  text-align: center;
+  color: #bbb;
+  font-size: 11px;
+  margin-top: 12px;
 }
 .login-mobile-brand {
   display: none;

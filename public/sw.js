@@ -1,9 +1,13 @@
-/* Service worker sederhana Gamma One: cache shell aplikasi, fallback offline. */
-const CACHE = 'gamma-one-v1';
-const SHELL = ['/', '/manifest.webmanifest'];
+/* Gamma One: HTML selalu dari jaringan (agar update langsung tayang),
+   aset berversi di-cache (nama berkas mengandung hash, aman), API tak di-cache. */
+const CACHE = 'gamma-one-v2';
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)).then(() => self.skipWaiting()));
+  event.waitUntil(
+    caches.open(CACHE)
+      .then((cache) => cache.add('/manifest.webmanifest').catch(() => {}))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', (event) => {
@@ -14,22 +18,40 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+function isImmutableAsset(pathname) {
+  return pathname.startsWith('/build/assets/') || pathname.startsWith('/images/') || pathname.endsWith('.woff2') || pathname.endsWith('.woff');
+}
+
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET' || !request.url.startsWith(self.location.origin)) {
     return;
   }
-  // Jangan cache API: selalu ke jaringan agar data absensi/keuangan segar.
-  if (new URL(request.url).pathname.startsWith('/api/')) {
+  const url = new URL(request.url);
+  if (url.pathname.startsWith('/api/')) {
     return;
   }
-  event.respondWith(
-    caches.match(request).then(
-      (cached) => cached || fetch(request).then((response) => {
+  // Navigasi/halaman: jaringan dulu, cache hanya saat offline.
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE).then((cache) => cache.put(request, copy));
+          return response;
+        })
+        .catch(() => caches.match(request).then((cached) => cached || caches.match('/')))
+    );
+    return;
+  }
+  // Aset berversi: cache dulu (aman karena nama berkas berubah tiap build).
+  if (isImmutableAsset(url.pathname)) {
+    event.respondWith(
+      caches.match(request).then((cached) => cached || fetch(request).then((response) => {
         const copy = response.clone();
         caches.open(CACHE).then((cache) => cache.put(request, copy));
         return response;
-      }).catch(() => caches.match('/'))
-    )
-  );
+      }))
+    );
+  }
 });
